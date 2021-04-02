@@ -1,0 +1,154 @@
+https://www.zabbix.com/documentation/3.4/zh/manual/installation/install
+https://renwole.com/archives/568
+
+解压：
+tar -zxvf zabbix-3.4.15.tar.gz
+
+创建用户账户
+groupadd zabbix
+useradd -g zabbix zabbix
+
+创建数据库，执行sql脚本
+
+解决configure: error: Unable to use libevent (libevent check failed)
+yum install libevent-devel  -y
+cd zabbix-3.4.15
+配置源代码（--enable-java一定要开启才能使用jmx）
+./configure --enable-server --enable-agent --enable-java --with-mysql --enable-ipv6 --with-net-snmp --with-libcurl --with-libxml2 --with-ldap -with-ssh2 --with-openipmi --with-openssl
+make install
+
+修改配置
+vi /usr/local/etc/zabbix_server.conf
+PidFile=/tmp/zabbix_server.pid
+DBHost=192.168.0.226
+DBName=zabbix
+DBUser=root
+DBPassword=123456
+DBPort=6306
+StartPollers=20
+StartPollersUnreachable=20
+StartPingers=20
+StartDiscoverers=20
+JavaGateway=127.0.0.1
+JavaGatewayPort=10052
+StartJavaPollers=5
+ListenIP=0.0.0.0
+Timeout=4
+LogSlowQueries=3000
+
+启动服务守护进程
+zabbix_server
+
+zabbix客户端配置默认（/usr/local/etc/zabbix_agentd.conf）
+Server=127.0.0.1
+ServerActive=127.0.0.1
+#Hostname=Zabbix server
+HostnameItem=system.hostname
+
+启动被监控客户端
+zabbix_agentd
+
+
+配置zabbix_java
+cd /usr/local/sbin/zabbix_java
+vi settings.sh
+LISTEN_IP="0.0.0.0" 
+LISTEN_PORT=10052
+PID_FILE="/tmp/zabbix_java.pid"
+START_POLLERS=5
+TIMEOUT=3
+启动
+sh startup.sh
+
+zabbix管理网站配置
+cd /data/zabbix/zabbix-3.4.15
+mkdir /data/zabbix/web
+ mkdir /data/zabbix/web/zabbix
+mkdir /data/zabbix/logs
+cp -rp frontends/php/* /data/zabbix/web/zabbix
+
+vi /data/zabbix/web/zabbix/include/classes/setup/CFrontendSetup.php
+找到 checkPhpAlwaysPopulateRawPostData()，在$current = ini_get('always_populate_raw_post_data'); 下面添加$current = -1;
+
+创建配置文件zabbix.9888.conf,内容如下：
+server {
+	listen  9888;
+	server_name localhost;
+	access_log /data/zabbix/logs/access.log main;
+	index index.html index.php index.html;
+	root /data/zabbix/web;
+
+	location / {
+		try_files $uri $uri/ /index.php?$args;
+	}
+
+	location ~ ^(.+.php)(.*)$ {
+	    fastcgi_split_path_info ^(.+.php)(.*)$;
+	    include fastcgi.conf;
+            fastcgi_pass   127.0.0.1:9000;
+            fastcgi_index  index.php;
+            fastcgi_param PATH_INFO $fastcgi_path_info;
+        }
+}
+
+开启总配置的log_format，把注释去掉
+
+http://192.168.0.227:9888/zabbix/
+Admin/zabbix
+
+关闭selinux（否则zabbix server无法正常运行）
+setenforce 0
+
+
+
+
+客户端安装
+解压：
+tar -zxvf zabbix-3.4.15.tar.gz
+
+创建用户账户
+groupadd zabbix
+useradd -g zabbix zabbix
+
+cd zabbix-3.4.15
+配置源代码
+./configure --enable-agent
+make install
+
+修改配置
+vi /usr/local/etc/zabbix_agentd.conf
+
+Server=192.168.0.227
+ServerActive=192.168.0.227
+#Hostname=Zabbix server
+HostnameItem=system.hostname
+
+启动被监控客户端
+zabbix_agentd
+
+
+使用阿里云sdk实现负载监控（监控类型为：外部检查）（https://www.alibabacloud.com/help/tc/doc-detail/28622.htm）
+
+安装pip：
+首先安装epel扩展源：
+安装pip：yum -y install python-pip
+
+安装sdk：
+pip install aliyun-python-sdk-core
+pip install aliyun-python-sdk-cms==6.0.13
+
+
+检查脚本slbmon.py放入/usr/local/share/zabbix/externalscripts
+chmod 775 slbmon.py
+
+
+
+
+安装Javagateway如果原来已经安装zabbix，只需要再添加以下zabbix-java（jmx）
+cd zabbix-3.4.15
+./configure --enable-java
+make && make install
+
+
+ps -ef | grep zabbix_server | grep -v grep | awk '{print $2}' | xargs kill -9
+netstat -an | grep LISTEN

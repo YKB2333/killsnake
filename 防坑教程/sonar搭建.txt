@@ -1,0 +1,71 @@
+1.创建用户
+adduser sonarUser
+
+2.为用户创建密码
+passwd sonarUser
+
+3.修改sonar的目录和用户组为sonarUser
+chown -R sonarUser:sonarUser sonarqube-7.8
+chown -R sonarUser:sonarUser /data/sonarqube-7.8/temp/
+
+
+4.修改sonar.sh
+RUN_AS_USER=sonarUser
+
+4.解压，修改sonar.properties
+sonar.jdbc.url=jdbc:mysql://192.168.0.226:6306/sonar?useUnicode=true&characterEncoding=utf8&rewriteBatchedStatements=true&useConfigs=maxPerformance&useSSL=false
+sonar.jdbc.username=root
+sonar.jdbc.password=root
+sonar.sorceEncoding=UTF-8
+sonar.login=admin
+sonar.password=admin
+
+5.启动sonar
+./sonar.sh start
+
+6.汉化
+https://github.com/SonarQubeCommunity/sonar-l10n-zh/releases/tag/sonar-l10n-zh-plugin-1.28
+/extensions/plugins/
+重启
+
+
+7.修改maven配置settings.xml
+<pluginGroups>
+	<pluginGroup>org.sonarsource.scanner.maven</pluginGroup>
+</pluginGroups>
+<profiles>
+	<profile>
+		<id>sonar</id>
+		<activation>
+			<activeByDefault>true</activeByDefault>
+		</activation>
+		<properties>
+			<sonar.host.url>
+				http://192.168.0.141:9000
+			</sonar.host.url>
+		</properties>
+	</profile>
+</profiles>
+
+
+maven项目扫描并提交报告
+mvn clean verify sonar:sonar
+==========================================================================================================================================================================
+扫描vue项目并提交报告
+1.安装sonar-scanner
+2.配置sonar-scanner环境变量
+3.修改sonar-scanner.properties，配置
+sonar.host.url=http://192.168.0.141:9000
+sonar.sourceEncoding=UTF-8
+4.在需要扫描的项目根目录增加sonar-project.properties文件，配置
+sonar.projectKey = mx-backstage-h5
+sonar.projectName = mx-backstage-h5
+
+
+https://blog.csdn.net/xiangqiang2015/article/details/81046307
+
+
+
+
+idea插件：SonarLint
+vs code插件：SonarLint

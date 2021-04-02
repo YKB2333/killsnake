@@ -1,0 +1,86 @@
+1.服务器安装Zabbix插件：
+grafana-cli plugins install alexanderzobnin-zabbix-app
+===========================================================================
+2.配置Data Sources
+---------------------------------------------------------------------------
+Settings：
+
+Name：Zabbix
+
+HTTP
+URL：http://192.168.0.227:9888/zabbix/api_jsonrpc.php
+Access：Server
+Whitelisted Cookies：
+
+Auth
+默认
+
+Zabbix API details
+Username：Admin
+Password：zabbix
+Cache TTL：1h
+Zabbix version：3.x
+
+Direct DB Connection
+默认
+
+Alerting
+默认
+
+Other
+默认
+---------------------------------------------------------------------------
+Dashboards:
+Zabbix System Status             import
+Zabbix Template Linux Server     import
+Zabbix Server Dashboard          import
+---------------------------------------------------------------------------
+
+Save & Test
+===========================================================================
+3.创建编辑仪表盘（Dashboards->Manage）
+Zabbix Server Dashboard（默认）
+Zabbix System Status（默认）
+Zabbix Template Linux Server（默认）
+---------------------------------------------------------------------------
+SLB 监控
+1.create Dashboard
+Queries(配置查询监控数据)
+Query Mode : Metrics
+Group(zabbix的主机群组): SLB
+Host(zabbix的主机) : SLB-120.55.236.226
+Application(zabbix应用集) : SLB监控
+Item(zabbix的监控项) : SLB实例每秒丢失连接数
+...其他监控项同理...
+
+Visualization(设置图形)
+
+General(基础信息配置)
+
+2.Dashboard setting
+Variables（配置变量，仪表盘可根据变量进行条件筛选）
+Data source : Zabbix
+Refresh : On Dashboard Load
+group : SLB(Query)
+host : $group.*(Query)
+
+netif : *.$host.Network interfaces.*(Query)  
+        /(?:Incoming|Outgoing) network traffic on (.*)/ (Regex)
+
+---------------------------------------------------------------------------
+服务器监控信息
+1.Dashboard setting
+Variables（配置变量，仪表盘可根据变量进行条件筛选）
+Data source : Zabbix
+Refresh : On Dashboard Load
+group : *
+host : $group.*(Query)
+netif : *.$host.Network interfaces.*(Query)  
+        /(?:Incoming|Outgoing) network traffic on (.*)/ (Regex)
+	Multi-value 
+	Include All option
+
+2.Add panel
+Convert to row(分类)
+Add Query
+---------------------------------------------------------------------------

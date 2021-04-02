@@ -1,0 +1,112 @@
+安装ansible
+1.控制主机安装ansible：yum install ansible（227）(也可源代码安装)
+2.被控制机器必须安装python2.6或python2.7
+
+
+安装maven
+配置maven环境变量：
+1.vi /etc/profile 
+export MAVEN_HOME=/data/apache-maven-3.6.1
+export PATH=$MAVEN_HOME/bin:$PATH
+2.source /etc/profile
+
+安装git
+yum install curl-devel expat-devel gettext-devel openssl-devel zlib-devel asciidoc(解决编译问题)
+cd git-2.9.5
+chmod 775 check_bindir 
+make prefix=/data/git all
+make prefix=/data/git install
+配置git环境变量
+1.vi /etc/profile 
+export PATH=$PATH:/data/git/bin
+2.source /etc/profile
+
+安装nodeJs
+tar -xvf node-v10.19.0-linux-x64.tar.gz
+cd node-v10.19.0-linux-x64
+ln -s /data/node-v10.19.0-linux-x64/bin/npm /usr/local/bin/npm
+ln -s /data/node-v10.19.0-linux-x64/bin/node /usr/local/bin/node
+npm config set registry https://registry.npm.taobao.org(设置淘宝镜像)
+npm install -g cnpm --registry=https://registry.npm.taobao.org
+ln -s /data/node-v10.19.0-linux-x64/bin/cnpm /usr/local/bin/cnpm
+npm install --unsafe-perm=true --allow-root(解决编译权限问题,执行npm install时，后面要加--unsafe-perm)
+yum install python-argparse(解决node编译，node-gyp rebuild报错问题)
+
+
+安装telnet（集群部署时，检查第一台机器是否启动成功，成功才启动其他集群机器）
+yum list telnet*
+yum install telnet-server 
+yum install telnet.*
+
+
+运行方式：
+1.tomcat运行jenkins.war
+2.java -jar jenkins.war --httpPort=8980
+
+http://192.168.0.227:8980/jenkins
+
+1.安装离线插件
+2.安装在线插件 Git Parameter
+3.配置maven
+4.配置git(机器配置了环境变量，会自动获取)
+
+
+SSH免密钥登录设置
+cd /root/.ssh
+ssh-keygen -t rsa -P ''
+将/root/.ssh/id_rsa.pub分发到其他服务器
+cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
+chmod 600 /root/.ssh/authorized_keys
+(使用ansible时，第一次报错Failed to connect to the host via ssh: Host key verification failed.连不上，在机器上面ssh目标机器，确实免密，然后再使用一次ansible又可以了，网上说要删除/root/.ssh/known_hosts里关于目标机器的信息，没试过)
+
+vi /etc/ssh/sshd_config (所有相关服务器)
+UseDNS no
+AddressFamily inet
+SyslogFacility AUTHPRIV
+PermitRootLogin yes
+PasswordAuthentication yes
+
+配置ansible文件/etc/ansible/hosts
+vi /etc/ansible/hosts
+[test]
+192.168.0.225
+192.168.0.226
+
+创建script脚本
+vi filename打开文件，执行 : set ff=unix 设置文件为unix，然后执行:wq，保存成unix格式（解决脚本找不到问题）
+
+修改ansible.cfg
+设置以root用户执行ansible，将remote_user = root前的注释符去掉
+开启accelerate
+[accelerate]
+accelerate_port = 5099
+accelerate_timeout = 30
+accelerate_connect_timeout = 5.0
+# The daemon timeout is measured in minutes. This time is measured
+# from the last activity to the accelerate daemon.
+accelerate_daemon_timeout = 30
+
+
+关闭SELinux：
+1、临时关闭（不用重启机器）：
+setenforce 0                  ##设置SELinux 成为permissive模式
+                              ##setenforce 1 设置SELinux 成为enforcing模式
+2、修改配置文件需要重启机器：
+修改/etc/selinux/config 文件
+将SELINUX=enforcing改为SELINUX=disabled
+重启机器即可
+
+
+修改主机名
+vi /etc/sysconfig/network
+追加一行： HOSTNAME=你的主机名
+vi /etc/hosts
+添加这句后面添加 你的主机名
+127.0.0.1               localhost.localdomain localhost 你的主机名
+
+修改完成之后，重启网络即可生效
+/etc/init.d/network restart
+
+
+
+使用ansible synchronize同步文件出现rsync: command not found，在目标及其执行yum install rsync -y 

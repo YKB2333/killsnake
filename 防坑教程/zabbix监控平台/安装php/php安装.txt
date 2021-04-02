@@ -1,0 +1,78 @@
+https://www.jianshu.com/p/c079a623858d
+
+安装依赖：
+yum -y install libxml2 libxml2-devel openssl openssl-devel \
+bzip2 bzip2-devel curl curl-devel libjpeg libjpeg-devel \
+libpng libpng-devel freetype-devel gmp-devel mysql-devel \
+ncurses ncurses-devel unixODBC-devel net-snmp-devel \
+libmcrypt libmcrypt-devel net-snmp mhash-devel
+
+需要特殊处理的依赖：
+yum -y install openldap openldap-devel
+cp -frp /usr/lib64/libldap* /usr/lib/
+
+下载&安装：
+cd /usr/local/src
+wget https://www.php.net/distributions/php-5.6.40.tar.gz
+tar -zxf php-5.6.40.tar.gz
+cd php-5.6.40
+
+./configure --prefix=/usr/local/php-5.6.40 --with-openssl --enable-fpm --with-mysql \
+--enable-sockets --enable-sysvshm --enable-mbstring --enable-bcmath --with-freetype-dir \
+--with-jpeg-dir --with-png-dir --with-zlib-dir --with-libxml-dir=/usr --with-pdo_mysql \
+--enable-xml --with-mhash --with-mcrypt --with-config-file-path=/usr/local/php-5.6.40/etc \
+--with-bz2 --with-curl --with-gd --with-gettext --with-snmp --with-ldap --with-mysqli
+
+编辑MakeFile
+找到 开头是 'EXTRA_LIBS' 这一行 在结尾加上 '-llber'
+
+make
+make install
+
+# 创建软连接
+ln -s /usr/local/php-5.6.40 /usr/local/php
+
+cp sapi/fpm/php-fpm /usr/local/bin
+cp php.ini-production /usr/local/php/etc/php.ini
+cp /usr/local/php/etc/php-fpm.conf.default /usr/local/php/etc/php-fpm.conf
+
+扩展插件：
+cd /usr/local/src/php-5.6.40/ext/mysqli
+yum install autoconf                    // 执行phpize命令时需要
+/usr/local/php/bin/phpize               // 生成configure文件
+./configure --with-php-config=/usr/local/php/bin/php-config --with-mysqli
+make && make install
+
+# 如果 mysqli.so文件存在，则说明 mysqli安装好了
+ls /usr/local/php/lib/php/extensions/no-debug-non-zts-20131226/mysqli.so
+
+# 接着编辑 php.ini文件（忽略这个步骤）
+vi /usr/local/php/etc/php.ini
+在文件中加入extension=mysqli.so
+
+# 重启 php-fpm即可
+kill -USR2 pid      // pid为 PHP master进程的进程号
+
+修改php-fpm.conf：
+/usr/local/php/etc/php-fpm.conf
+# 修改 user和 group，和 nginx的启动用户一致
+user = www
+group = root
+
+修改php.ini:
+/usr/local/php/etc/php.ini
+upload_max_filesize = 20M
+post_max_size = 20M
+max_execution_time = 300
+max_input_time = 300
+date.timezone = Asia/Shanghai
+
+
+
+
+
+启动php-fpm：/usr/local/php/sbin/php-fpm -R
+重启php-fpm:kill -USR2 42891
+
+php-fpm 关闭：kill -INT 42891
+php-fpm 重启：kill -USR2 42891

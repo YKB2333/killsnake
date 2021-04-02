@@ -1,0 +1,31 @@
+https://www.jianshu.com/p/36e42a368ef8
+
+确保centos是纯净板，没有安装Apache/Nginx/php/MySQL，有要卸载
+docker pull centos:centos7.1.1503
+docker run -d -it -p 8888:8888 -p 8887:8887 -p 8886:8886 --name=centos7 centos:centos7.1.1503(宝塔默认端口为8888，如果还有其他要用到的端口，要先 -p port:port 做映射)
+docker exec -it centos7 /bin/bash
+解决mysql安装失败
+yum install -y cmake
+yum install ncurses-devel
+yum install openssl-devel
+yum swap -y fakesystemd systemd && yum clean all
+yum update -y  && yum clean all
+https://blog.csdn.net/ws254702368/article/details/96475285
+https://yq.aliyun.com/articles/670111
+
+
+
+https://www.bt.cn/bbs/thread-19376-1-1.html
+https://www.bt.cn/btcode.html
+Linux面板7.1.0安装命令：
+yum install -y wget && wget -O install.sh http://download.bt.cn/install/install_6.0.sh && sh install.sh
+
+http://127.0.0.1:8888/241f1264
+ro9vdkts/607a1bb5
+
+
+试验性Centos/Ubuntu/Debian安装命令支持ipv6，注意使用root权限执行此命令 (支持Centos8)
+curl -sSO http://download.bt.cn/install/new_install.sh && bash new_install.sh
+
+
+宝塔启动：bt start

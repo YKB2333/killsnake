@@ -1,0 +1,67 @@
+https://www.jianshu.com/p/23750a652e15
+https://blog.csdn.net/qq_29553063/article/details/91488561
+
+1.解压
+tar -xzf apache-skywalking-apm-6.6.0.tar.gz
+2.放mysql驱动进oap-libs
+3.进入目录修改配置
+cd apache-skywalking-apm-bin/config
+vi application.yml
+注释掉h2配置
+增加MySQL配置
+mysql:
+    properties:
+      jdbcUrl: ${SW_JDBC_URL:"jdbc:mysql://rm-wz95jb89r1k08gx3nco.mysql.rds.aliyuncs.com:3306/mx_skywalking"}
+      dataSource.user: ${SW_DATA_SOURCE_USER:mx_skywalking}
+      dataSource.password: ${SW_DATA_SOURCE_PASSWORD:kanS0ngChengKengBu!HAha}
+      dataSource.cachePrepStmts: ${SW_DATA_SOURCE_CACHE_PREP_STMTS:true}
+      dataSource.prepStmtCacheSize: ${SW_DATA_SOURCE_PREP_STMT_CACHE_SQL_SIZE:250}
+      dataSource.prepStmtCacheSqlLimit: ${SW_DATA_SOURCE_PREP_STMT_CACHE_SQL_LIMIT:2048}
+      dataSource.useServerPrepStmts: ${SW_DATA_SOURCE_USE_SERVER_PREP_STMTS:true}
+    metadataQueryMaxSize: ${SW_STORAGE_MYSQL_QUERY_MAX_SIZE:5000}
+
+cd apache-skywalking-apm-bin/webapp/
+vi webapp.yml
+
+server:
+  port: 7810
+
+collector:
+  path: /graphql
+  ribbon:
+    ReadTimeout: 10000
+    # Point to all backend's restHost:restPort, split by ,
+    listOfServers: 127.0.0.1:12800
+security:
+  user:
+    # username
+    admin: admin
+      # password
+    password: 775885angel
+
+cd apache-skywalking-apm-bin/agent/
+vi agent.config
+collector.backend_service=${SW_AGENT_COLLECTOR_BACKEND_SERVICES:172.16.113.91:11800}
+
+修改脚本jvm参数
+-XX:-ReduceInitialCardMarks
+分配内存
+
+#初始化
+./oapServiceInit.sh
+启动
+./oapService.sh
+./webappService.sh
+或
+./startup.sh
+
+
+
+agent目录打包分发到所有应用服务器
+
+
+应用启动命令增加
+java -javaagent:/agent目录/skywalking-agent.jar -Dskywalking.agent.service_name=trace-api -Dskywalking.collector.backend_service=192.168.0.227:12800 -jar xx.jar
+
+
+ps：skywalking需要高配置的es

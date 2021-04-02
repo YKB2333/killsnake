@@ -1,0 +1,22 @@
+https://www.jianshu.com/p/a97d2efb23c5
+
+
+docker run -it --rm \
+  --link mongo-yapi:mongo \
+  --entrypoint npm \
+  --workdir /api/vendors \
+  registry.cn-hangzhou.aliyuncs.com/anoy/yapi \
+  run install-server
+
+
+docker run -d \
+  --name yapi \
+  --link mongo-yapi:mongo \
+  --workdir /api/vendors \
+  -p 3100:3000 \
+  registry.cn-hangzhou.aliyuncs.com/anoy/yapi \
+  server/app.js
+
+
+
+http://192.168.0.227:3100/
